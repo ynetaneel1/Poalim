@@ -867,77 +867,6 @@
       text-align: center;
       max-width: 92vw;
     }
-
-    @page {
-      size: A4 portrait;
-      margin: 7mm;
-    }
-
-    @media print {
-      * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-      html, body {
-        background: #fff !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-      .action-bar, .no-print, .col-del {
-        display: none !important;
-      }
-      .page-wrapper {
-        margin: 0 !important;
-        padding: 0 !important;
-        max-width: 100% !important;
-        width: 100% !important;
-      }
-      #pdf-document {
-        box-shadow: none !important;
-        border: none !important;
-        padding: 2mm 4mm !important;
-        border-radius: 0 !important;
-        width: 100% !important;
-      }
-      .grid-3 {
-        display: grid !important;
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-        gap: 8px 12px !important;
-      }
-      .grid-2, .signatures-grid {
-        display: grid !important;
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        gap: 8px 12px !important;
-      }
-      input, select, textarea {
-        border: none !important;
-        border-bottom: 1px solid #cbd5e1 !important;
-        border-radius: 0 !important;
-        padding: 2px 4px !important;
-        font-size: 0.86rem !important;
-        background: transparent !important;
-        -webkit-appearance: none !important;
-        appearance: none !important;
-      }
-      input::placeholder, textarea::placeholder {
-        color: transparent !important;
-      }
-      td input {
-        border-bottom: none !important;
-        padding: 1px 2px !important;
-        font-size: 0.82rem !important;
-      }
-      #attachedMapImg {
-        width: auto !important;
-        max-width: 100% !important;
-        height: auto !important;
-        max-height: 235px !important;
-      }
-      .section, .rules-box, .sig-card {
-        break-inside: avoid;
-        page-break-inside: avoid;
-      }
-    }
   </style>
 </head>
 <body>
@@ -948,8 +877,7 @@
       <span>🛡️ מחלקת ביטחון קיבוץ מגדל עוז — טופס אתר בנייה</span>
     </div>
     <div class="action-buttons">
-      <button type="button" id="exportWaBtn" class="btn btn-wa" onclick="exportAndShareWhatsApp(event)">📲 שליחה לווצאפ (PDF + טקסט להעתקה)</button>
-      <button type="button" class="btn btn-outline btn-sm" onclick="exportVectorPDF(event)" title="שמירת קובץ PDF וקטורי שבו כל הטקסט ניתן להעתקה">📄 שמירת PDF טקסטואלי</button>
+      <button type="button" id="exportWaBtn" class="btn btn-wa" onclick="exportAndShareWhatsApp(event)">📲 ייצוא PDF ושליחה ישירה לווצאפ</button>
       <button type="button" class="btn btn-danger btn-sm" onclick="resetForm()">🗑️ איפוס</button>
     </div>
   </div>
@@ -2041,42 +1969,7 @@
 
       const safeName = residentName.replace(/[^\u0590-\u05FFa-zA-Z0-9_-]/g, '_');
       const fileName = `בקשת_אתר_בנייה_מגדל_עוז_${safeName}.pdf`;
-
-      // Build copyable text summary of guards and workers for easy copy-paste into Zeev Lavan
-      const residentId = document.getElementById('residentId').value.trim();
-      const residentPhone = document.getElementById('residentPhone').value.trim();
-      const startDateVal = formatDateIL(document.getElementById('startDate').value);
-      const workHoursVal = document.getElementById('workHours').value.trim();
-
-      let guardsTxt = [];
-      document.querySelectorAll('#guardsTbody tr').forEach((tr, i) => {
-        const inp = tr.querySelectorAll('input');
-        const n = inp[0]?.value.trim();
-        const id = inp[1]?.value.trim();
-        const ph = inp[2]?.value.trim();
-        const lic = inp[3]?.value.trim();
-        if (n || id || ph) guardsTxt.push(`${i + 1}. ${n || '-'} | ת"ז: ${id || '-'} | טל': ${ph || '-'} | רישיון נשק: ${lic || '-'}`);
-      });
-
-      let workersTxt = [];
-      document.querySelectorAll('#workersTbody tr').forEach((tr, i) => {
-        const inp = tr.querySelectorAll('input');
-        const n = inp[0]?.value.trim();
-        const id = inp[1]?.value.trim();
-        const ph = inp[2]?.value.trim();
-        const exp = inp[3]?.value.trim();
-        if (n || id || ph) workersTxt.push(`${i + 1}. ${n || '-'} | ת"ז: ${id || '-'} | טל': ${ph || '-'} | תוקף: ${exp || '-'}`);
-      });
-
-      const waMessage = [
-        `*בקשת אתר בנייה — קיבוץ מגדל עוז*`,
-        `• *מזמין:* ${residentName}${residentId ? ` (ת"ז ${residentId})` : ''}${residentPhone ? ` | ${residentPhone}` : ''}`,
-        `• *מיקום האתר:* ${siteLoc}`,
-        `• *תחילת עבודה:* ${startDateVal}${workHoursVal ? ` | *שעות:* ${workHoursVal}` : ''}`,
-        guardsTxt.length ? `\n*שומרים חמושים:*\n${guardsTxt.join('\n')}` : '',
-        workersTxt.length ? `\n*פועלים מבוקשים:*\n${workersTxt.join('\n')}` : '',
-        `\nמצורף קובץ ה-PDF החתום עם מפת האתר.`
-      ].filter(Boolean).join('\n');
+      const waMessage = `שלום נתנאל, מצורף טופס בקשה ותוכנית אבטחה לאתר בנייה בקיבוץ מגדל עוז.\nמזמין: ${residentName}\nמיקום האתר: ${siteLoc}`;
 
       if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
         alert('שגיאה בטעינת רכיב ה-PDF. ודא חיבור לאינטרנט ונסה שוב.');
@@ -2199,24 +2092,6 @@
         btn.disabled = false;
         btn.innerHTML = origBtnText;
       }
-    }
-
-    function exportVectorPDF(e) {
-      if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-      const residentName = document.getElementById('residentName').value.trim();
-      const siteLoc = document.getElementById('siteLocation').value.trim();
-      if (!residentName || !siteLoc) {
-        alert('נא למלא לכל הפחות את שם התושב/מזמין העבודה ואת מיקום אתר הבנייה לפני שמירת ה-PDF.');
-        return;
-      }
-      const origTitle = document.title;
-      const safeName = residentName.replace(/[^\u0590-\u05FFa-zA-Z0-9_-]/g, '_');
-      document.title = `בקשת_אתר_בנייה_מגדל_עוז_${safeName}`;
-      window.print();
-      setTimeout(() => { document.title = origTitle; }, 1500);
     }
 
     function resetForm() {
