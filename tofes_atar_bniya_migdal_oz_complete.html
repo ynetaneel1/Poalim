@@ -1,0 +1,2242 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>טופס בקשה ותוכנית אבטחה לאתר בנייה - קיבוץ מגדל עוז</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <style>
+    :root {
+      --primary: #1b365d;
+      --primary-light: #2b5288;
+      --accent: #b91c1c;
+      --accent-soft: #fef2f2;
+      --bg: #e2e8f0;
+      --card: #ffffff;
+      --border: #cbd5e1;
+      --text: #0f172a;
+      --muted: #475569;
+      --success: #15803d;
+      --whatsapp: #25D366;
+      --whatsapp-dark: #1da851;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg);
+      color: var(--text);
+      direction: rtl;
+      line-height: 1.5;
+    }
+
+    /* =========================================================
+       TOP STICKY ACTION BAR (WhatsApp PDF Share + Reset)
+       ========================================================= */
+    .action-bar {
+      position: sticky;
+      top: 0;
+      z-index: 900;
+      background: linear-gradient(135deg, #132847 0%, #1b365d 100%);
+      color: #fff;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 3px 14px rgba(15, 23, 42, 0.25);
+    }
+
+    .action-bar-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .action-buttons {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 0.94rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .btn:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .btn-wa {
+      background: var(--whatsapp);
+      color: #062b14;
+      font-weight: 800;
+      box-shadow: 0 2px 10px rgba(37, 211, 102, 0.45);
+    }
+    .btn-wa:hover:not(:disabled) { background: var(--whatsapp-dark); color: #fff; }
+
+    .btn-pdf {
+      background: #16a34a;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(22, 163, 74, 0.4);
+    }
+    .btn-pdf:hover:not(:disabled) { background: #15803d; }
+
+    .btn-map {
+      background: #0284c7;
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.28);
+    }
+    .btn-map:hover { background: #0369a1; }
+
+    .btn-sign {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-sign:hover { background: var(--primary-light); }
+
+    .btn-outline {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { background: #f8fafc; }
+
+    .btn-danger {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .btn-danger:hover { background: #fecaca; }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.84rem;
+      border-radius: 6px;
+    }
+
+    /* =========================================================
+       DESKTOP LAYOUT (Dedicated Spacious Workstation View)
+       ========================================================= */
+    .page-wrapper {
+      max-width: 960px;
+      margin: 28px auto 60px;
+      padding: 0 20px;
+    }
+
+    #pdf-document {
+      background: var(--card);
+      border-radius: 14px;
+      box-shadow: 0 10px 32px rgba(15, 23, 42, 0.1);
+      padding: 34px 40px;
+      border: 1px solid #cbd5e1;
+    }
+
+    /* Header */
+    .doc-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 3px solid var(--primary);
+      padding-bottom: 18px;
+      margin-bottom: 22px;
+      gap: 24px;
+    }
+
+    .doc-header-text {
+      flex: 1;
+    }
+
+    .doc-badge {
+      display: inline-block;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid #fecaca;
+      font-weight: 700;
+      font-size: 0.82rem;
+      padding: 3px 12px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+
+    .doc-title {
+      margin: 0;
+      font-size: 1.62rem;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1.25;
+    }
+
+    .doc-subtitle {
+      margin: 6px 0 0;
+      font-size: 0.94rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .doc-contact-strip {
+      margin-top: 10px;
+      font-size: 0.86rem;
+      color: #1e293b;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      padding: 6px 14px;
+      border-radius: 8px;
+      display: inline-block;
+    }
+
+    .doc-logo {
+      width: 106px;
+      height: auto;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    /* Sections */
+    .section {
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    }
+
+    .section-header {
+      background: linear-gradient(to left, #f1f5f9, #f8fafc);
+      border-bottom: 1px solid var(--border);
+      border-radius: 10px 10px 0 0;
+      padding: 10px 18px;
+      font-weight: 700;
+      font-size: 1.02rem;
+      color: var(--primary);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .section-body {
+      padding: 16px 18px;
+    }
+
+    /* Desktop Grid System */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px 18px;
+      align-items: end;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px 18px;
+      align-items: end;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field.span-2 {
+      grid-column: span 2;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    label .req {
+      color: var(--accent);
+      margin-right: 2px;
+    }
+
+    input[type="text"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      font-size: 0.94rem;
+      color: #0f172a;
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input:hover, select:hover, textarea:hover {
+      border-color: #94a3b8;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(27, 54, 93, 0.12);
+    }
+
+    input[readonly] {
+      background: #f8fafc;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 68px;
+    }
+
+    /* Ratio Alert Banner */
+    .ratio-box {
+      margin-top: 14px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 0.9rem;
+    }
+
+    .ratio-badge {
+      font-weight: 800;
+      color: var(--primary);
+      background: #dbeafe;
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    /* Desktop Tables */
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table.responsive-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    table.responsive-table th,
+    table.responsive-table td {
+      border: 1px solid #cbd5e1;
+      padding: 8px 10px;
+      text-align: right;
+      vertical-align: middle;
+    }
+
+    table.responsive-table th {
+      background: #f8fafc;
+      font-weight: 700;
+      color: var(--primary);
+      white-space: nowrap;
+    }
+
+    table.responsive-table td input {
+      padding: 6px 9px;
+      font-size: 0.88rem;
+      border: 1px solid #e2e8f0;
+    }
+
+    .col-num {
+      width: 38px;
+      text-align: center !important;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .col-del {
+      width: 46px;
+      text-align: center !important;
+    }
+
+    /* Map Attachment Area */
+    .map-preview-container {
+      border: 2px dashed #94a3b8;
+      border-radius: 10px;
+      background: #f8fafc;
+      padding: 18px;
+      text-align: center;
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .map-preview-container.has-image {
+      border-style: solid;
+      border-color: var(--primary);
+      background: #fff;
+      padding: 12px;
+    }
+
+    #attachedMapImg {
+      max-width: 100%;
+      max-height: 330px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      display: none;
+      object-fit: contain;
+    }
+
+    .map-legend-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      font-size: 0.84rem;
+      color: #334155;
+      margin-top: 6px;
+    }
+
+    .legend-dot {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+
+    /* Rules Summary Box */
+    .rules-box {
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+    }
+
+    .rules-title {
+      font-weight: 800;
+      color: #92400e;
+      font-size: 0.96rem;
+      margin: 0 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rules-list {
+      margin: 0;
+      padding-right: 20px;
+      font-size: 0.85rem;
+      color: #1e293b;
+      line-height: 1.52;
+    }
+
+    .rules-list li {
+      margin-bottom: 4px;
+    }
+
+    /* Signatures Grid (Resident + Rabshatz ONLY) */
+    .signatures-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 12px;
+    }
+
+    .sig-card {
+      border: 1.5px solid #94a3b8;
+      border-radius: 10px;
+      padding: 14px 16px;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 165px;
+    }
+
+    .sig-card-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--primary);
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+    }
+
+    .sig-display-area {
+      height: 84px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      background: #f8fafc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      margin-bottom: 10px;
+      position: relative;
+    }
+
+    .sig-display-area img {
+      max-height: 76px;
+      max-width: 95%;
+      object-fit: contain;
+    }
+
+    .sig-placeholder {
+      font-size: 0.84rem;
+      color: #94a3b8;
+    }
+
+    .sig-meta {
+      font-size: 0.84rem;
+      color: #475569;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .rabshatz-empty-space {
+      height: 84px;
+      border-bottom: 1px solid #94a3b8;
+      margin-bottom: 10px;
+    }
+
+    .declaration-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #1e293b;
+      background: #f8fafc;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      margin-bottom: 12px;
+    }
+
+    .declaration-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: var(--primary);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* =========================================================
+       DEDICATED MOBILE LAYOUT (Strictly stacked 1-column fields)
+       ========================================================= */
+    @media screen and (max-width: 767px) {
+      .action-bar {
+        padding: 10px 12px;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .action-bar-title {
+        justify-content: center;
+        text-align: center;
+        font-size: 0.95rem;
+      }
+
+      .action-buttons {
+        display: flex;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .action-buttons .btn-wa {
+        flex: 1;
+        padding: 11px 12px;
+        font-size: 0.94rem;
+      }
+
+      .page-wrapper {
+        margin: 12px auto 36px;
+        padding: 0 8px;
+      }
+
+      #pdf-document {
+        padding: 16px 14px;
+        border-radius: 10px;
+      }
+
+      .doc-header {
+        flex-direction: column-reverse;
+        text-align: center;
+        gap: 10px;
+        padding-bottom: 14px;
+      }
+
+      .doc-logo {
+        width: 82px;
+      }
+
+      .doc-title {
+        font-size: 1.24rem;
+      }
+
+      .doc-subtitle {
+        font-size: 0.85rem;
+      }
+
+      .doc-contact-strip {
+        display: block;
+        font-size: 0.8rem;
+        line-height: 1.5;
+      }
+
+      .section-header {
+        padding: 9px 12px;
+        font-size: 0.95rem;
+      }
+
+      .section-body {
+        padding: 12px;
+      }
+
+      .grid-2,
+      .grid-3,
+      .signatures-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        align-items: stretch !important;
+      }
+
+      .field,
+      .field.full,
+      .field.span-2 {
+        width: 100% !important;
+        grid-column: auto !important;
+      }
+
+      label {
+        font-size: 0.86rem;
+      }
+
+      input[type="text"],
+      input[type="tel"],
+      input[type="number"],
+      input[type="date"],
+      select,
+      textarea {
+        font-size: 16px;
+        padding: 10px 12px;
+      }
+
+      table.responsive-table,
+      table.responsive-table thead,
+      table.responsive-table tbody,
+      table.responsive-table th,
+      table.responsive-table td,
+      table.responsive-table tr {
+        display: block;
+        width: 100%;
+      }
+
+      table.responsive-table thead {
+        display: none;
+      }
+
+      table.responsive-table tr {
+        border: 1.5px solid #cbd5e1;
+        border-radius: 9px;
+        margin-bottom: 12px;
+        padding: 10px 12px;
+        background: #f8fafc;
+        position: relative;
+      }
+
+      table.responsive-table td {
+        border: none;
+        padding: 5px 0;
+        text-align: right;
+      }
+
+      table.responsive-table td.col-num {
+        text-align: right !important;
+        font-weight: 800;
+        color: var(--primary);
+        font-size: 0.92rem;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 6px;
+        margin-bottom: 6px;
+      }
+
+      table.responsive-table td.col-num::before {
+        content: "רשומה מס' ";
+      }
+
+      table.responsive-table td[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #475569;
+        margin-bottom: 3px;
+      }
+
+      table.responsive-table td.col-del {
+        position: absolute;
+        top: 8px;
+        left: 10px;
+        width: auto;
+        padding: 0;
+      }
+
+      .sig-meta {
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      #leafletMap {
+        height: 340px;
+      }
+    }
+
+    /* =========================================================
+       MODALS & TOAST
+       ========================================================= */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.72);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #fff;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 900px;
+      max-height: 94vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 45px rgba(0,0,0,0.35);
+    }
+
+    .modal-box.sig-modal {
+      max-width: 540px;
+    }
+
+    .modal-header {
+      background: var(--primary);
+      color: #fff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .map-toolbar {
+      padding: 10px 14px;
+      background: #f1f5f9;
+      border-bottom: 1px solid #cbd5e1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .tool-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .tool-btn {
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: #1e293b;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .tool-btn:hover {
+      background: #e2e8f0;
+    }
+
+    #leafletMap {
+      width: 100%;
+      height: 440px;
+      background: #e2e8f0;
+    }
+
+    .modal-footer {
+      padding: 10px 16px;
+      background: #f8fafc;
+      border-top: 1px solid #cbd5e1;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    #sigCanvas {
+      width: 100%;
+      height: 210px;
+      background: #fff;
+      border: 2px dashed #94a3b8;
+      border-radius: 8px;
+      touch-action: none;
+      cursor: crosshair;
+      display: block;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0f172a;
+      color: #fff;
+      padding: 11px 20px;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      z-index: 3000;
+      display: none;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.28);
+      text-align: center;
+      max-width: 92vw;
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 7mm;
+    }
+
+    @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      html, body {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .action-bar, .no-print, .col-del {
+        display: none !important;
+      }
+      .page-wrapper {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+      }
+      #pdf-document {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 2mm 4mm !important;
+        border-radius: 0 !important;
+        width: 100% !important;
+      }
+      .grid-3 {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 8px 12px !important;
+      }
+      .grid-2, .signatures-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px 12px !important;
+      }
+      input, select, textarea {
+        border: none !important;
+        border-bottom: 1px solid #cbd5e1 !important;
+        border-radius: 0 !important;
+        padding: 2px 4px !important;
+        font-size: 0.86rem !important;
+        background: transparent !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+      }
+      input::placeholder, textarea::placeholder {
+        color: transparent !important;
+      }
+      td input {
+        border-bottom: none !important;
+        padding: 1px 2px !important;
+        font-size: 0.82rem !important;
+      }
+      #attachedMapImg {
+        width: auto !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: 235px !important;
+      }
+      .section, .rules-box, .sig-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Sticky Bar (Direct WhatsApp PDF Export + Reset) -->
+  <div class="action-bar no-print">
+    <div class="action-bar-title">
+      <span>🛡️ מחלקת ביטחון קיבוץ מגדל עוז — טופס אתר בנייה</span>
+    </div>
+    <div class="action-buttons">
+      <button type="button" id="exportWaBtn" class="btn btn-wa" onclick="exportAndShareWhatsApp(event)">📲 שליחה לווצאפ (PDF + טקסט להעתקה)</button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="exportVectorPDF(event)" title="שמירת קובץ PDF וקטורי שבו כל הטקסט ניתן להעתקה">📄 שמירת PDF טקסטואלי</button>
+      <button type="button" class="btn btn-danger btn-sm" onclick="resetForm()">🗑️ איפוס</button>
+    </div>
+  </div>
+
+  <div class="page-wrapper">
+    <div id="pdf-document">
+
+      <!-- Document Header -->
+      <div class="doc-header">
+        <div class="doc-header-text">
+          <span class="doc-badge">מחלקת ביטחון יישובי • קיבוץ מגדל עוז</span>
+          <h1 class="doc-title">נוהל אבטחה ובקשה להכנסת פועלים — אתר בנייה חדש</h1>
+          <p class="doc-subtitle">יש למלא את כל הפרטים במלואם, לצרף מפת אזור עבודה, לחתום ולשלוח כקובץ PDF לרבש"צ עד שבוע לפני תחילת העבודה</p>
+          <div class="doc-contact-strip">
+            <strong>רבש"צ מגדל עוז:</strong> נתנאל יאמין (053-7177033) &nbsp;|&nbsp; <strong>חמ"ל יישובי:</strong> 02-9936406
+          </div>
+        </div>
+        <img class="doc-logo" id="mainDocLogo" src="data:image/png;base64,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" alt="לוגו ביטחון קיבוץ מגדל עוז" />
+      </div>
+
+      <!-- Section 1: General & Site Details -->
+      <div class="section">
+        <div class="section-header">
+          <span>1. פרטי המזמין, הקבלן ואתר הבנייה</span>
+        </div>
+        <div class="section-body">
+          <div class="grid-3">
+            <div class="field">
+              <label>שם היישוב</label>
+              <input type="text" id="settlementName" value="קיבוץ מגדל עוז" readonly />
+            </div>
+            <div class="field">
+              <label><span class="req">*</span>שם מלא של התושב / מזמין העבודה</label>
+              <input type="text" id="residentName" placeholder="שם פרטי ומשפחה" oninput="syncSignatureMeta()" />
+            </div>
+            <div class="field">
+              <label><span class="req">*</span>תעודת זהות (תושב / מזמין)</label>
+              <input type="text" id="residentId" placeholder="9 ספרות" oninput="syncSignatureMeta()" />
+            </div>
+            <div class="field">
+              <label><span class="req">*</span>טלפון נייד (תושב / מזמין)</label>
+              <input type="tel" id="residentPhone" placeholder="05X-XXXXXXX" />
+            </div>
+            <div class="field">
+              <label>שם הקבלן המבצע / חברה</label>
+              <input type="text" id="contractorName" placeholder="שם הקבלן / ח.פ" />
+            </div>
+            <div class="field">
+              <label>טלפון קבלן / מנהל עבודה בשטח</label>
+              <input type="tel" id="contractorPhone" placeholder="05X-XXXXXXX" />
+            </div>
+            <div class="field full">
+              <label><span class="req">*</span>שם / מיקום מדויק של אתר הבנייה ביישוב</label>
+              <input type="text" id="siteLocation" placeholder="לדוגמה: הרחבה צפונית מגרש 42 / רחוב..." />
+            </div>
+            <div class="field">
+              <label><span class="req">*</span>תאריך תחילת עבודה מתוכנן</label>
+              <input type="date" id="startDate" />
+            </div>
+            <div class="field span-2">
+              <label>ימי עבודה ושעות עבודה</label>
+              <input type="text" id="workHours" value="" placeholder="הזן ימי ושעות עבודה מבוקשים" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Security Plan & Fencing -->
+      <div class="section">
+        <div class="section-header">
+          <span>2. תוכנית אבטחה, גידור אתר ופרטי השמירה</span>
+        </div>
+        <div class="section-body">
+          <div class="grid-2">
+            <div class="field full">
+              <label><span class="req">*</span>מצב גידור אתר הבנייה (קובע את יחס השמירה הנדרש)</label>
+              <select id="fenceStatus" onchange="updateSecurityRatio()">
+                <option value="fenced">אתר מגודר ותקין (גדר 3 מ' או 2 מ' + טלטלית, שער נעול כל הזמן) — יחס שמירה מופחת 1:5</option>
+                <option value="unfenced">אתר ללא גדר / גדר פתוחה / גדר לקויה — יחס שמירה 1:3</option>
+                <option value="special">מתאר מיוחד / סמוך למוסדות חינוך (יקבע פרטנית ע"י רבש"צ וקצין הגמ"ר)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>כמות פועלים מבוקשת באתר</label>
+              <input type="number" id="workersCount" min="1" max="50" value="3" oninput="updateSecurityRatio()" />
+            </div>
+            <div class="field">
+              <label>כמות שומרים חמושים מתוכננת</label>
+              <input type="number" id="guardsCount" min="1" max="20" value="1" oninput="updateSecurityRatio()" />
+            </div>
+            <div class="field full">
+              <label><span class="req">*</span>מיקום הצבת השומר בשטח (נקודה שולטת)</label>
+              <input type="text" id="guardLocation" placeholder="לדוגמה: בשער האתר / נקודה שולטת הצופה על כלל הפועלים והיקף האתר" />
+            </div>
+          </div>
+
+          <div class="ratio-box" id="ratioBanner">
+            <div>
+              <strong>יחס אבטחה מחייב:</strong> <span class="ratio-badge" id="ratioText">1:5 (שומר אחד על כל 5 פועלים)</span>
+            </div>
+            <div id="ratioStatusText" style="font-weight: 700; color: #15803d;">
+              ✓ כמות השומרים תואמת לדרישות הנוהל (מינימום נדרש: 1)
+            </div>
+          </div>
+
+          <!-- Guard Details Table -->
+          <div style="margin-top: 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:8px; flex-wrap:wrap;">
+              <label style="margin:0;">פרטי השומרים החמושים (חובה רישיון נשק בתוקף ואישור רבש"צ מראש):</label>
+              <button type="button" class="btn btn-outline btn-sm no-print" onclick="addGuardRow()">+ הוסף שומר</button>
+            </div>
+            <div class="table-scroll">
+              <table id="guardsTable" class="responsive-table">
+                <thead>
+                  <tr>
+                    <th class="col-num">#</th>
+                    <th>שם מלא של השומר</th>
+                    <th>תעודת זהות</th>
+                    <th>טלפון נייד</th>
+                    <th>מס' רישיון נשק בתוקף</th>
+                    <th class="col-del no-print">הסר</th>
+                  </tr>
+                </thead>
+                <tbody id="guardsTbody">
+                  <tr>
+                    <td class="col-num">1</td>
+                    <td data-label="שם מלא של השומר"><input type="text" placeholder="שם השומר" /></td>
+                    <td data-label="תעודת זהות"><input type="text" placeholder="ת.ז." /></td>
+                    <td data-label="טלפון נייד"><input type="tel" placeholder="05X-XXXXXXX" /></td>
+                    <td data-label="מס' רישיון נשק בתוקף"><input type="text" placeholder="מספר רישיון" /></td>
+                    <td class="col-del no-print"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this, 'guardsTbody')">✕</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Google Maps Work Area Definition -->
+      <div class="section">
+        <div class="section-header">
+          <span>3. הגדרת אזור העבודה על גבי מפת גוגל (תצלום אוויר מצורף)</span>
+          <div class="no-print" style="display:flex; gap:6px;">
+            <button type="button" class="btn btn-map btn-sm" onclick="openMapModal()">🗺️ פתח מפה להגדרת האזור וצילום</button>
+          </div>
+        </div>
+        <div class="section-body">
+          <div class="map-preview-container" id="mapPreviewBox">
+            <img id="attachedMapImg" alt="מפת הגדרת אזור עבודה" />
+            <div id="mapEmptyPrompt">
+              <div style="font-weight:700; color:#334155; margin-bottom:4px;">טרם צורפה מפת הגדרת אזור העבודה</div>
+              <div style="font-size:0.85rem; color:#64748b; margin-bottom:12px;">
+                לחץ על הכפתור לפתיחת מפת גוגל של קיבוץ מגדל עוז, סמן את גבול אתר הבנייה (פוליגון), וצלם ישירות לתוך הטופס.
+              </div>
+              <div class="no-print" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+                <button type="button" class="btn btn-map" onclick="openMapModal()">📍 פתח חלון מפה להגדרת אזור העבודה</button>
+                <label class="btn btn-outline" style="cursor:pointer; margin:0;">
+                  🖼️ העלה תמונת מפה מהמכשיר
+                  <input type="file" accept="image/*" style="display:none;" onchange="handleManualMapUpload(event)" />
+                </label>
+              </div>
+            </div>
+            <div id="mapCaptionBar" style="display:none; width:100%;">
+              <div class="map-legend-bar">
+                <span><span class="legend-dot" style="background:#ef4444;"></span>גבול אתר הבנייה (פוליגון)</span>
+                <span id="mapCoordsLabel" style="font-weight:600; color:#1b365d;"></span>
+              </div>
+              <div class="no-print" style="margin-top:8px; display:flex; gap:8px; justify-content:center;">
+                <button type="button" class="btn btn-map btn-sm" onclick="openMapModal()">✏️ ערוך / צלם מחדש במפה</button>
+                <label class="btn btn-outline btn-sm" style="cursor:pointer; margin:0;">
+                  🔄 החלף תמונה מקובץ
+                  <input type="file" accept="image/*" style="display:none;" onchange="handleManualMapUpload(event)" />
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Workers List Table -->
+      <div class="section">
+        <div class="section-header">
+          <span>4. פירוט הפועלים המבוקשים לאתר (חובה למלא במלואו כולל טלפון)</span>
+          <button type="button" class="btn btn-outline btn-sm no-print" onclick="addWorkerRow()">+ הוסף שורת פועל</button>
+        </div>
+        <div class="section-body">
+          <div class="table-scroll">
+            <table id="workersTable" class="responsive-table">
+              <thead>
+                <tr>
+                  <th class="col-num">#</th>
+                  <th>שם הפועל המלא</th>
+                  <th>מספר ת.ז.</th>
+                  <th>מספר טלפון</th>
+                  <th>תוקף היתר עבודה / כרטיס</th>
+                  <th class="col-del no-print">הסר</th>
+                </tr>
+              </thead>
+              <tbody id="workersTbody">
+                <tr>
+                  <td class="col-num">1</td>
+                  <td data-label="שם הפועל המלא"><input type="text" placeholder="שם מלא" /></td>
+                  <td data-label="מספר ת.ז."><input type="text" placeholder="ת.ז." /></td>
+                  <td data-label="מספר טלפון"><input type="tel" placeholder="05X-XXXXXXX" /></td>
+                  <td data-label="תוקף היתר עבודה / כרטיס"><input type="text" placeholder="בתוקף עד..." /></td>
+                  <td class="col-del no-print"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this, 'workersTbody')">✕</button></td>
+                </tr>
+                <tr>
+                  <td class="col-num">2</td>
+                  <td data-label="שם הפועל המלא"><input type="text" placeholder="שם מלא" /></td>
+                  <td data-label="מספר ת.ז."><input type="text" placeholder="ת.ז." /></td>
+                  <td data-label="מספר טלפון"><input type="tel" placeholder="05X-XXXXXXX" /></td>
+                  <td data-label="תוקף היתר עבודה / כרטיס"><input type="text" placeholder="בתוקף עד..." /></td>
+                  <td class="col-del no-print"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this, 'workersTbody')">✕</button></td>
+                </tr>
+                <tr>
+                  <td class="col-num">3</td>
+                  <td data-label="שם הפועל המלא"><input type="text" placeholder="שם מלא" /></td>
+                  <td data-label="מספר ת.ז."><input type="text" placeholder="ת.ז." /></td>
+                  <td data-label="מספר טלפון"><input type="tel" placeholder="05X-XXXXXXX" /></td>
+                  <td data-label="תוקף היתר עבודה / כרטיס"><input type="text" placeholder="בתוקף עד..." /></td>
+                  <td class="col-del no-print"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this, 'workersTbody')">✕</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 5: Additional Notes -->
+      <div class="section">
+        <div class="section-header">
+          <span>5. פירוט העבודה / הערות נוספות לרבש"צ</span>
+        </div>
+        <div class="section-body">
+          <textarea id="additionalNotes" placeholder="פרט כאן את מהות העבודה באתר, דרכי גישה, ציוד מיוחד או בקשות חריגות לבחינת הרבש&quot;צ..."></textarea>
+        </div>
+      </div>
+
+      <!-- Section 6: Concise Mandatory Rules Summary (Fence optional to reduce guard ratio) -->
+      <div class="rules-box">
+        <div class="rules-title">⚠️ עיקרי נוהל הכנסת ואבטחת פועלים פלסטינים — הנחיות מחייבות לתושב, לקבלן ולשומר:</div>
+        <ul class="rules-list">
+          <li><strong>איסור כניסת רכבים פלסטינים:</strong> אין כניסת רכבים פלסטינים ליישוב בשום מקרה ולא יתקבלו החרגות.</li>
+          <li><strong>הגשה מראש ואישורים:</strong> יש להגיש טופס זה עד <strong>שבוע לפני תחילת העבודה</strong> לבניית תוכנית אבטחה ע"י הרבש"צ. חובה לפתוח משתמש באתר המנהל האזרחי ולחדש מראש את תוקף רישיון העבודה והכרטיס המגנטי (פועל ללא אישור בתוקף לא ייכנס; כניסה להצעת מחיר דורשת אישור ק. הגמ"ר 3 ימים מראש).</li>
+          <li><strong>יחסי שמירה וגידור האתר:</strong> אתר ללא גדר, עם גדר פתוחה או גדר לקויה — יחס השמירה הוא <strong>1:3</strong> (שומר אחד על כל 3 פועלים); אתר עם גדר תקנית ושער נעול כל הזמן — יחס השמירה הוא <strong>1:5</strong> (שומר אחד על כל 5 פועלים). גדר תקנית היא גדר בגובה <strong>3 מטרים</strong>, או גדר בגובה <strong>2 מטרים בתוספת טלטלית</strong> בחלקה העליון. בכל פתיחת גדר יש לעדכן מראש את החמ"ל היישובי במספר <strong>02-9936406</strong>.</li>
+          <li><strong>ליווי חמוש וזיהוי פועלים:</strong> ליווי הפועלים מהשער לאתר ובחזרה יתבצע אך ורק ע"י <strong>שומר חמוש, מנהל עבודה חמוש או תושב חמוש</strong>. כל פועל ילבש <strong>ווסט צהוב</strong> ויפקיד כרטיס מגנטי בשער.</li>
+          <li><strong>הנחיות לשומר הפועלים:</strong> אישור רבש"צ מראש, הצגת <strong>רישיון נשק בתוקף</strong> בתחילת יום העבודה, נשק מאובטח ברצועה לחגורה, <strong>ווסט כתום</strong>, <strong>כובע זיהוי זמין בכיס</strong>, לבוש תקני (<strong>מכנס ארוך ונעליים סגורות</strong>), ביצוע סיור אחת לחצי שעה ושמירה על קשר עין רציף עם הפועלים והיקף האתר מנקודה שולטת.</li>
+        </ul>
+      </div>
+
+      <!-- Section 7: Signatures (Resident + Rabshatz ONLY - NO Yishuv signature) -->
+      <div class="declaration-row">
+        <input type="checkbox" id="agreeCheckbox" />
+        <label for="agreeCheckbox" style="font-size:0.86rem; color:#0f172a; cursor:pointer;">
+          אני החתום מטה מצהיר כי קראתי והבנתי את עיקרי נוהל הכנסת הפועלים היישובי, ומתחייב לעמוד בכל תנאי האבטחה והליווי במלואם.
+        </label>
+      </div>
+
+      <div class="signatures-grid">
+        <!-- Resident Signature -->
+        <div class="sig-card">
+          <div class="sig-card-title" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>חתימת התושב / מבקש הבקשה</span>
+            <button type="button" class="btn btn-sign btn-sm no-print" onclick="openSigModal()">✍️ לחץ לחתימה</button>
+          </div>
+          <div class="sig-display-area" id="sigDisplayBox" onclick="openSigModal()" style="cursor:pointer;">
+            <span class="sig-placeholder" id="sigPlaceholderText">לחץ כאן לחתימה דיגיטלית לפני ייצוא ושליחה</span>
+            <img id="residentSigImg" style="display:none;" alt="חתימת התושב" />
+          </div>
+          <div class="sig-meta">
+            <span>שם: <strong id="sigResidentNameMirror">_____________</strong></span>
+            <span>תאריך: <strong id="sigDateMirror"></strong></span>
+          </div>
+        </div>
+
+        <!-- Rabshatz Signature (Empty space as requested, NO Yishuv signature) -->
+        <div class="sig-card">
+          <div class="sig-card-title">אישור וחתימת רבש"צ היישוב</div>
+          <div class="rabshatz-empty-space"></div>
+          <div class="sig-meta">
+            <span>שם הרבש"צ: _________________</span>
+            <span>תאריך: ____/____/2026</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Interactive Google Maps Modal (Polygon Only + Max Zoom) -->
+  <div class="modal-backdrop" id="mapModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span>🗺️ סימון גבול אזור העבודה — מפת גוגל (קיבוץ מגדל עוז)</span>
+        <button type="button" class="modal-close" onclick="closeMapModal()">&times;</button>
+      </div>
+      <div class="map-toolbar">
+        <div class="tool-group">
+          <span style="font-size:0.85rem; font-weight:700; color:#1b365d;">🟥 לחץ על המפה לסימון קודקודי גבול אתר הבנייה (פוליגון)</span>
+        </div>
+        <div class="tool-group">
+          <button type="button" class="tool-btn" onclick="zoomMaxIn()">🔍+ זום אין מקסימלי</button>
+          <button type="button" class="tool-btn" onclick="toggleMapLayer()">🛰️ החלף תצוגה: לוויין / מפה</button>
+        </div>
+      </div>
+      <div id="leafletMap"></div>
+      <div class="modal-footer">
+        <div class="tool-group">
+          <button type="button" class="btn btn-outline btn-sm" onclick="undoLastPoint()">↩️ בטל נקודה אחרונה</button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="clearMapDrawings()">🗑️ נקה פוליגון</button>
+        </div>
+        <div class="tool-group">
+          <button type="button" class="btn btn-outline" onclick="closeMapModal()">ביטול</button>
+          <button type="button" class="btn btn-pdf" onclick="captureMapToForm()">📸 צלם מפה וצרף לטופס</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signature Pad Modal -->
+  <div class="modal-backdrop" id="sigModal">
+    <div class="modal-box sig-modal">
+      <div class="modal-header">
+        <span>✍️ חתימת התושב / מבקש הבקשה</span>
+        <button type="button" class="modal-close" onclick="closeSigModal()">&times;</button>
+      </div>
+      <div style="padding: 14px 16px;">
+        <div style="font-size:0.86rem; color:#475569; margin-bottom:8px;">
+          חתום בתוך המסגרת באמצעות העכבר או האצבע (במסך מגע):
+        </div>
+        <canvas id="sigCanvas" width="480" height="210"></canvas>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger btn-sm" onclick="clearSigCanvas()">🗑️ נקה חתימה</button>
+        <div class="tool-group">
+          <button type="button" class="btn btn-outline" onclick="closeSigModal()">ביטול</button>
+          <button type="button" class="btn btn-pdf" onclick="saveSignatureToForm()">✓ אשר וצרף חתימה</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toastMsg"></div>
+
+  <script>
+    // --- Initialization & Date Setup ---
+    const RABSHATZ_WA_PHONE = '972537177033'; // 053-7177033
+    const todayStr = new Date().toLocaleDateString('he-IL');
+    document.getElementById('sigDateMirror').textContent = todayStr;
+
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    const startDateInput = document.getElementById('startDate');
+    if (!startDateInput.value) {
+      startDateInput.value = nextWeek.toISOString().split('T')[0];
+    }
+
+    function showToast(msg, duration = 3800) {
+      const t = document.getElementById('toastMsg');
+      t.textContent = msg;
+      t.style.display = 'block';
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => { t.style.display = 'none'; }, duration);
+    }
+
+    function syncSignatureMeta() {
+      const name = document.getElementById('residentName').value.trim();
+      const id = document.getElementById('residentId').value.trim();
+      document.getElementById('sigResidentNameMirror').textContent = name ? (id ? `${name} (${id})` : name) : '_____________';
+    }
+
+    // --- Security Ratio Calculator ---
+    function updateSecurityRatio() {
+      const fence = document.getElementById('fenceStatus').value;
+      const workers = Math.max(1, parseInt(document.getElementById('workersCount').value || '1', 10));
+      const guards = Math.max(1, parseInt(document.getElementById('guardsCount').value || '1', 10));
+      const ratioText = document.getElementById('ratioText');
+      const statusText = document.getElementById('ratioStatusText');
+      const banner = document.getElementById('ratioBanner');
+
+      if (fence === 'special') {
+        ratioText.textContent = 'יקבע פרטנית ע"י רבש"צ וקצין הגמ"ר';
+        statusText.textContent = 'ℹ️ נדרש אישור ותיאום פרטני מראש מול הרבש"צ';
+        statusText.style.color = '#1e40af';
+        banner.style.background = '#eff6ff';
+        banner.style.borderColor = '#bfdbfe';
+        return;
+      }
+
+      const ratio = fence === 'fenced' ? 5 : 3;
+      const requiredGuards = Math.ceil(workers / ratio);
+      ratioText.textContent = `1:${ratio} (שומר אחד על כל ${ratio} פועלים)`;
+
+      if (guards >= requiredGuards) {
+        statusText.textContent = `✓ כמות השומרים תואמת לדרישות הנוהל (מינימום נדרש: ${requiredGuards})`;
+        statusText.style.color = '#15803d';
+        banner.style.background = '#f0fdf4';
+        banner.style.borderColor = '#bbf7d0';
+      } else {
+        statusText.textContent = `⚠️ חסרים שומרים! עבור ${workers} פועלים נדרשים לפחות ${requiredGuards} שומרים חמושים`;
+        statusText.style.color = '#b91c1c';
+        banner.style.background = '#fef2f2';
+        banner.style.borderColor = '#fecaca';
+      }
+    }
+
+    // --- Dynamic Tables (Workers & Guards) ---
+    function renumberTable(tbodyId) {
+      const rows = document.getElementById(tbodyId).querySelectorAll('tr');
+      rows.forEach((tr, idx) => {
+        const numCell = tr.querySelector('.col-num');
+        if (numCell) numCell.textContent = idx + 1;
+      });
+      if (tbodyId === 'workersTbody') {
+        document.getElementById('workersCount').value = rows.length;
+        updateSecurityRatio();
+      }
+    }
+
+    function addWorkerRow() {
+      const tbody = document.getElementById('workersTbody');
+      const idx = tbody.querySelectorAll('tr').length + 1;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="col-num">${idx}</td>
+        <td data-label="שם הפועל המלא"><input type="text" placeholder="שם מלא" /></td>
+        <td data-label="מספר ת.ז."><input type="text" placeholder="ת.ז." /></td>
+        <td data-label="מספר טלפון"><input type="tel" placeholder="05X-XXXXXXX" /></td>
+        <td data-label="תוקף היתר עבודה / כרטיס"><input type="text" placeholder="בתוקף עד..." /></td>
+        <td class="col-del no-print"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this, 'workersTbody')">✕</button></td>
+      `;
+      tbody.appendChild(tr);
+      renumberTable('workersTbody');
+    }
+
+    function addGuardRow() {
+      const tbody = document.getElementById('guardsTbody');
+      const idx = tbody.querySelectorAll('tr').length + 1;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="col-num">${idx}</td>
+        <td data-label="שם מלא של השומר"><input type="text" placeholder="שם השומר" /></td>
+        <td data-label="תעודת זהות"><input type="text" placeholder="ת.ז." /></td>
+        <td data-label="טלפון נייד"><input type="tel" placeholder="05X-XXXXXXX" /></td>
+        <td data-label="מס' רישיון נשק בתוקף"><input type="text" placeholder="מספר רישיון" /></td>
+        <td class="col-del no-print"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this, 'guardsTbody')">✕</button></td>
+      `;
+      tbody.appendChild(tr);
+      renumberTable('guardsTbody');
+      document.getElementById('guardsCount').value = tbody.querySelectorAll('tr').length;
+      updateSecurityRatio();
+    }
+
+    function removeRow(btn, tbodyId) {
+      const tbody = document.getElementById(tbodyId);
+      if (tbody.querySelectorAll('tr').length <= 1) {
+        showToast('חייבת להישאר לפחות שורה אחת בטבלה');
+        return;
+      }
+      btn.closest('tr').remove();
+      renumberTable(tbodyId);
+    }
+
+    // --- Interactive Google Maps Modal (Polygon Only + Max Zoom) ---
+    let map = null;
+    let isSatellite = true;
+    let googleSatLayer = null;
+    let googleStreetLayer = null;
+    let polyPoints = [];
+    let polyLayer = null;
+    let vertexMarkers = [];
+
+    const MIGDAL_OZ_CENTER = [31.6442, 35.1469];
+
+    function openMapModal() {
+      document.getElementById('mapModal').classList.add('active');
+      if (!map) {
+        initGoogleMap();
+      } else {
+        setTimeout(() => map.invalidateSize(), 150);
+      }
+    }
+
+    function closeMapModal() {
+      document.getElementById('mapModal').classList.remove('active');
+    }
+
+    function initGoogleMap() {
+      map = L.map('leafletMap', {
+        center: MIGDAL_OZ_CENTER,
+        zoom: 18,
+        minZoom: 14,
+        maxZoom: 22
+      });
+
+      googleSatLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: 'Google Maps',
+        crossOrigin: 'anonymous',
+        maxNativeZoom: 21,
+        maxZoom: 22
+      });
+
+      googleStreetLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        attribution: 'Google Maps',
+        crossOrigin: 'anonymous',
+        maxNativeZoom: 21,
+        maxZoom: 22
+      });
+
+      googleSatLayer.addTo(map);
+
+      polyLayer = L.polygon([], {
+        color: '#ef4444',
+        weight: 3.5,
+        dashArray: '6, 4',
+        fillColor: '#ef4444',
+        fillOpacity: 0.25
+      }).addTo(map);
+
+      map.on('click', function(e) {
+        const ll = e.latlng;
+        polyPoints.push(ll);
+        polyLayer.setLatLngs(polyPoints);
+        const dot = L.circleMarker(ll, {
+          radius: 5,
+          color: '#fff',
+          weight: 2,
+          fillColor: '#ef4444',
+          fillOpacity: 1
+        }).addTo(map);
+        vertexMarkers.push(dot);
+      });
+
+      setTimeout(() => map.invalidateSize(), 200);
+    }
+
+    function zoomMaxIn() {
+      if (!map) return;
+      map.setZoom(21);
+    }
+
+    function toggleMapLayer() {
+      if (!map) return;
+      if (isSatellite) {
+        map.removeLayer(googleSatLayer);
+        googleStreetLayer.addTo(map);
+        isSatellite = false;
+      } else {
+        map.removeLayer(googleStreetLayer);
+        googleSatLayer.addTo(map);
+        isSatellite = true;
+      }
+    }
+
+    function undoLastPoint() {
+      if (!polyPoints.length) return;
+      polyPoints.pop();
+      polyLayer.setLatLngs(polyPoints);
+      const dot = vertexMarkers.pop();
+      if (dot) map.removeLayer(dot);
+    }
+
+    function clearMapDrawings() {
+      polyPoints = [];
+      if (polyLayer) polyLayer.setLatLngs([]);
+      vertexMarkers.forEach(m => map.removeLayer(m));
+      vertexMarkers = [];
+    }
+
+    function captureMapToForm() {
+      if (!map) return;
+      const mapEl = document.getElementById('leafletMap');
+      const width = mapEl.clientWidth;
+      const height = mapEl.clientHeight;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(0, 0, width, height);
+
+      const mapRect = mapEl.getBoundingClientRect();
+      const tileImgs = mapEl.querySelectorAll('.leaflet-tile-pane img');
+      tileImgs.forEach(img => {
+        if (!img.complete || img.naturalWidth === 0) return;
+        const r = img.getBoundingClientRect();
+        const x = r.left - mapRect.left;
+        const y = r.top - mapRect.top;
+        try {
+          ctx.drawImage(img, x, y, r.width, r.height);
+        } catch (err) {
+          console.warn('Tile draw skipped:', err);
+        }
+      });
+
+      if (polyPoints.length > 0) {
+        ctx.save();
+        ctx.beginPath();
+        polyPoints.forEach((ll, idx) => {
+          const pt = map.latLngToContainerPoint(ll);
+          if (idx === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        });
+        if (polyPoints.length >= 3) {
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(239, 68, 68, 0.28)';
+          ctx.fill();
+        }
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 3.5;
+        ctx.setLineDash([8, 5]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        polyPoints.forEach(ll => {
+          const pt = map.latLngToContainerPoint(ll);
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, 4.5, 0, Math.PI * 2);
+          ctx.fillStyle = '#ef4444';
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        });
+        ctx.restore();
+      }
+
+      const center = map.getCenter();
+      const coordStr = `קיבוץ מגדל עוז | נ"צ: ${center.lat.toFixed(5)}, ${center.lng.toFixed(5)} | ${todayStr}`;
+      ctx.save();
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.78)';
+      ctx.fillRect(0, height - 26, width, 26);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px Arial, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(coordStr, width - 10, height - 13);
+      ctx.restore();
+
+      const dataUrl = canvas.toDataURL('image/png');
+      attachMapDataUrl(dataUrl, `${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}`);
+      closeMapModal();
+      showToast('✓ תצלום מפת גוגל ואזור העבודה צורפו לטופס בהצלחה');
+    }
+
+    function handleManualMapUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        attachMapDataUrl(ev.target.result, 'תמונה מצורפת ע"י המשתמש');
+        showToast('✓ תמונת המפה צורפה לטופס');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function attachMapDataUrl(dataUrl, coordsText) {
+      const imgEl = document.getElementById('attachedMapImg');
+      imgEl.src = dataUrl;
+      imgEl.style.display = 'block';
+      document.getElementById('mapEmptyPrompt').style.display = 'none';
+      document.getElementById('mapCaptionBar').style.display = 'block';
+      document.getElementById('mapPreviewBox').classList.add('has-image');
+      document.getElementById('mapCoordsLabel').textContent = coordsText ? `נ"צ: ${coordsText}` : '';
+    }
+
+    // --- Digital Signature Pad Modal ---
+    const sigCanvas = document.getElementById('sigCanvas');
+    const sigCtx = sigCanvas.getContext('2d');
+    let isDrawingSig = false;
+    let hasSigStroke = false;
+
+    function setupSigCanvas() {
+      sigCtx.strokeStyle = '#0f172a';
+      sigCtx.lineWidth = 2.6;
+      sigCtx.lineCap = 'round';
+      sigCtx.lineJoin = 'round';
+    }
+    setupSigCanvas();
+
+    function getCanvasPos(e) {
+      const rect = sigCanvas.getBoundingClientRect();
+      const scaleX = sigCanvas.width / rect.width;
+      const scaleY = sigCanvas.height / rect.height;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    }
+
+    sigCanvas.addEventListener('mousedown', (e) => {
+      isDrawingSig = true;
+      hasSigStroke = true;
+      const pos = getCanvasPos(e);
+      sigCtx.beginPath();
+      sigCtx.moveTo(pos.x, pos.y);
+    });
+
+    sigCanvas.addEventListener('mousemove', (e) => {
+      if (!isDrawingSig) return;
+      const pos = getCanvasPos(e);
+      sigCtx.lineTo(pos.x, pos.y);
+      sigCtx.stroke();
+    });
+
+    window.addEventListener('mouseup', () => { isDrawingSig = false; });
+
+    sigCanvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      isDrawingSig = true;
+      hasSigStroke = true;
+      const pos = getCanvasPos(e);
+      sigCtx.beginPath();
+      sigCtx.moveTo(pos.x, pos.y);
+    }, { passive: false });
+
+    sigCanvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (!isDrawingSig) return;
+      const pos = getCanvasPos(e);
+      sigCtx.lineTo(pos.x, pos.y);
+      sigCtx.stroke();
+    }, { passive: false });
+
+    sigCanvas.addEventListener('touchend', () => { isDrawingSig = false; });
+
+    function openSigModal() {
+      document.getElementById('sigModal').classList.add('active');
+    }
+
+    function closeSigModal() {
+      document.getElementById('sigModal').classList.remove('active');
+    }
+
+    function clearSigCanvas() {
+      sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+      hasSigStroke = false;
+    }
+
+    function saveSignatureToForm() {
+      if (!hasSigStroke) {
+        showToast('נא לחתום בתוך המסגרת לפני האישור');
+        return;
+      }
+      const sigData = sigCanvas.toDataURL('image/png');
+      const sigImg = document.getElementById('residentSigImg');
+      sigImg.src = sigData;
+      sigImg.style.display = 'block';
+      document.getElementById('sigPlaceholderText').style.display = 'none';
+      document.getElementById('agreeCheckbox').checked = true;
+      syncSignatureMeta();
+      closeSigModal();
+      showToast('✓ חתימת התושב נשמרה בטופס');
+    }
+
+    // --- Helper Functions for Clean PDF Construction ---
+    function esc(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function formatDateIL(isoDate) {
+      if (!isoDate) return '—';
+      const parts = isoDate.split('-');
+      if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      return isoDate;
+    }
+
+    function buildCleanA4SheetHTML() {
+      const settlementName = document.getElementById('settlementName').value.trim() || 'קיבוץ מגדל עוז';
+      const residentName = document.getElementById('residentName').value.trim() || '—';
+      const residentId = document.getElementById('residentId').value.trim() || '—';
+      const residentPhone = document.getElementById('residentPhone').value.trim() || '—';
+      const contractorName = document.getElementById('contractorName').value.trim() || '—';
+      const contractorPhone = document.getElementById('contractorPhone').value.trim() || '—';
+      const siteLoc = document.getElementById('siteLocation').value.trim() || '—';
+      const startDate = formatDateIL(document.getElementById('startDate').value);
+      const workHours = document.getElementById('workHours').value.trim() || '—';
+
+      const fenceSelect = document.getElementById('fenceStatus');
+      const fenceText = fenceSelect.options[fenceSelect.selectedIndex].text;
+      const workersCount = document.getElementById('workersCount').value || '1';
+      const guardsCount = document.getElementById('guardsCount').value || '1';
+      const guardLocation = document.getElementById('guardLocation').value.trim() || '—';
+      const ratioText = document.getElementById('ratioText').textContent;
+      const additionalNotes = document.getElementById('additionalNotes').value.trim() || 'אין הערות נוספות';
+      const logoSrc = document.getElementById('mainDocLogo').src;
+
+      const mapImgEl = document.getElementById('attachedMapImg');
+      const hasMap = mapImgEl.style.display !== 'none' && mapImgEl.src;
+      const mapCoords = document.getElementById('mapCoordsLabel').textContent;
+
+      const sigImgEl = document.getElementById('residentSigImg');
+      const hasSignature = sigImgEl.style.display !== 'none' && sigImgEl.src;
+
+      let guardsRowsHtml = '';
+      document.querySelectorAll('#guardsTbody tr').forEach((tr, idx) => {
+        const inputs = tr.querySelectorAll('input');
+        guardsRowsHtml += `
+          <tr>
+            <td style="border:1px solid #cbd5e1; padding:5px 7px; text-align:center; font-weight:700;">${idx + 1}</td>
+            <td style="border:1px solid #cbd5e1; padding:5px 7px;">${esc(inputs[0]?.value.trim() || '—')}</td>
+            <td style="border:1px solid #cbd5e1; padding:5px 7px;">${esc(inputs[1]?.value.trim() || '—')}</td>
+            <td style="border:1px solid #cbd5e1; padding:5px 7px;">${esc(inputs[2]?.value.trim() || '—')}</td>
+            <td style="border:1px solid #cbd5e1; padding:5px 7px;">${esc(inputs[3]?.value.trim() || '—')}</td>
+          </tr>
+        `;
+      });
+
+      let workersRowsHtml = '';
+      document.querySelectorAll('#workersTbody tr').forEach((tr, idx) => {
+        const inputs = tr.querySelectorAll('input');
+        workersRowsHtml += `
+          <tr>
+            <td style="border:1px solid #cbd5e1; padding:5px 7px; text-align:center; font-weight:700;">${idx + 1}</td>
+            <td style="border:1px solid #cbd5e1; padding:5px 7px;">${esc(inputs[0]?.value.trim() || '—')}</td>
+            <td style="border:1px solid #cbd5e1; padding:5px 7px;">${esc(inputs[1]?.value.trim() || '—')}</td>
+            <td style="border:1px solid #cbd5e1; padding:5px 7px;">${esc(inputs[2]?.value.trim() || '—')}</td>
+            <td style="border:1px solid #cbd5e1; padding:5px 7px;">${esc(inputs[3]?.value.trim() || '—')}</td>
+          </tr>
+        `;
+      });
+
+      return `
+        <div style="width:760px; background:#ffffff; direction:rtl; text-align:right; font-family:Arial, Tahoma, sans-serif; color:#0f172a; padding:18px 22px; box-sizing:border-box; line-height:1.4;">
+          <!-- Header -->
+          <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid #1b365d; padding-bottom:10px; margin-bottom:12px; gap:14px;">
+            <div style="flex:1;">
+              <div style="display:inline-block; background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-weight:700; font-size:11px; padding:2px 9px; border-radius:99px; margin-bottom:4px;">
+                מחלקת ביטחון יישובי • קיבוץ מגדל עוז
+              </div>
+              <div style="font-size:19px; font-weight:800; color:#1b365d; margin-bottom:3px;">
+                נוהל אבטחה ובקשה להכנסת פועלים — אתר בנייה חדש
+              </div>
+              <div style="font-size:11.5px; color:#475569; margin-bottom:5px;">
+                יש להגיש לרבש"צ עד שבוע לפני תחילת העבודה בצירוף מפת אזור העבודה וחתימת המזמין
+              </div>
+              <div style="font-size:11.5px; background:#f8fafc; border:1px solid #cbd5e1; padding:4px 9px; border-radius:5px; display:inline-block;">
+                <strong>רבש"צ מגדל עוז:</strong> נתנאל יאמין (053-7177033) &nbsp;|&nbsp; <strong>חמ"ל יישובי:</strong> 02-9936406
+              </div>
+            </div>
+            <img src="${logoSrc}" style="width:84px; height:auto; object-fit:contain;" />
+          </div>
+
+          <!-- Section 1 -->
+          <div style="border:1px solid #cbd5e1; border-radius:7px; margin-bottom:10px; overflow:hidden;">
+            <div style="background:#f1f5f9; border-bottom:1px solid #cbd5e1; padding:5px 10px; font-weight:700; font-size:13px; color:#1b365d;">
+              1. פרטי המזמין, הקבלן ואתר הבנייה
+            </div>
+            <div style="padding:8px 10px;">
+              <table style="width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed;">
+                <tr>
+                  <td style="padding:4px 6px; border-bottom:1px solid #e2e8f0; width:33%;">
+                    <div style="font-size:10.5px; color:#64748b; font-weight:700;">שם היישוב</div>
+                    <div style="font-weight:700; color:#1b365d;">${esc(settlementName)}</div>
+                  </td>
+                  <td style="padding:4px 6px; border-bottom:1px solid #e2e8f0; width:34%;">
+                    <div style="font-size:10.5px; color:#64748b; font-weight:700;">שם מלא של התושב / מזמין</div>
+                    <div style="font-weight:700;">${esc(residentName)}</div>
+                  </td>
+                  <td style="padding:4px 6px; border-bottom:1px solid #e2e8f0; width:33%;">
+                    <div style="font-size:10.5px; color:#64748b; font-weight:700;">תעודת זהות</div>
+                    <div style="font-weight:600;">${esc(residentId)}</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 6px; border-bottom:1px solid #e2e8f0;">
+                    <div style="font-size:10.5px; color:#64748b; font-weight:700;">טלפון נייד (מזמין)</div>
+                    <div style="font-weight:600;">${esc(residentPhone)}</div>
+                  </td>
+                  <td style="padding:4px 6px; border-bottom:1px solid #e2e8f0;">
+                    <div style="font-size:10.5px; color:#64748b; font-weight:700;">שם הקבלן המבצע / חברה</div>
+                    <div style="font-weight:600;">${esc(contractorName)}</div>
+                  </td>
+                  <td style="padding:4px 6px; border-bottom:1px solid #e2e8f0;">
+                    <div style="font-size:10.5px; color:#64748b; font-weight:700;">טלפון קבלן / מנהל עבודה</div>
+                    <div style="font-weight:600;">${esc(contractorPhone)}</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="3" style="padding:4px 6px; border-bottom:1px solid #e2e8f0;">
+                    <div style="font-size:10.5px; color:#64748b; font-weight:700;">מיקום מדויק של אתר הבנייה ביישוב</div>
+                    <div style="font-weight:700;">${esc(siteLoc)}</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 6px;">
+                    <div style="font-size:10.5px; color:#64748b; font-weight:700;">תאריך תחילת עבודה מתוכנן</div>
+                    <div style="font-weight:600;">${esc(startDate)}</div>
+                  </td>
+                  <td colspan="2" style="padding:4px 6px;">
+                    <div style="font-size:10.5px; color:#64748b; font-weight:700;">ימי עבודה ושעות עבודה</div>
+                    <div style="font-weight:600;">${esc(workHours)}</div>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- Section 2 -->
+          <div style="border:1px solid #cbd5e1; border-radius:7px; margin-bottom:10px; overflow:hidden;">
+            <div style="background:#f1f5f9; border-bottom:1px solid #cbd5e1; padding:5px 10px; font-weight:700; font-size:13px; color:#1b365d;">
+              2. תוכנית אבטחה, גידור אתר ופרטי השמירה
+            </div>
+            <div style="padding:8px 10px;">
+              <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:7px;">
+                <tr>
+                  <td colspan="3" style="padding:4px 6px; border-bottom:1px solid #e2e8f0;">
+                    <div style="font-size:10.5px; color:#64748b; font-weight:700;">מצב גידור האתר</div>
+                    <div style="font-weight:700;">${esc(fenceText)}</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 6px; border-bottom:1px solid #e2e8f0; width:33%;">
+                    <div style="font-size:10.5px; color:#64748b; font-weight:700;">כמות פועלים מבוקשת</div>
+                    <div style="font-weight:700;">${esc(workersCount)}</div>
+                  </td>
+                  <td style="padding:4px 6px; border-bottom:1px solid #e2e8f0; width:33%;">
+                    <div style="font-size:10.5px; color:#64748b; font-weight:700;">כמות שומרים מתוכננת</div>
+                    <div style="font-weight:700;">${esc(guardsCount)}</div>
+                  </td>
+                  <td style="padding:4px 6px; border-bottom:1px solid #e2e8f0; width:34%;">
+                    <div style="font-size:10.5px; color:#64748b; font-weight:700;">יחס שמירה מחייב</div>
+                    <div style="font-weight:700; color:#1b365d;">${esc(ratioText)}</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="3" style="padding:4px 6px;">
+                    <div style="font-size:10.5px; color:#64748b; font-weight:700;">מיקום הצבת השומר בשטח (נקודה שולטת)</div>
+                    <div style="font-weight:600;">${esc(guardLocation)}</div>
+                  </td>
+                </tr>
+              </table>
+
+              <div style="font-size:11px; font-weight:700; color:#334155; margin-bottom:4px;">פרטי השומרים החמושים:</div>
+              <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
+                <thead>
+                  <tr style="background:#f8fafc; color:#1b365d;">
+                    <th style="border:1px solid #cbd5e1; padding:4px 6px; width:30px; text-align:center;">#</th>
+                    <th style="border:1px solid #cbd5e1; padding:4px 6px; text-align:right;">שם מלא של השומר</th>
+                    <th style="border:1px solid #cbd5e1; padding:4px 6px; text-align:right;">תעודת זהות</th>
+                    <th style="border:1px solid #cbd5e1; padding:4px 6px; text-align:right;">טלפון נייד</th>
+                    <th style="border:1px solid #cbd5e1; padding:4px 6px; text-align:right;">מס' רישיון נשק בתוקף</th>
+                  </tr>
+                </thead>
+                <tbody>${guardsRowsHtml}</tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Section 3: Map -->
+          <div style="border:1px solid #cbd5e1; border-radius:7px; margin-bottom:10px; overflow:hidden;">
+            <div style="background:#f1f5f9; border-bottom:1px solid #cbd5e1; padding:5px 10px; font-weight:700; font-size:13px; color:#1b365d;">
+              3. הגדרת אזור העבודה על גבי מפת גוגל (תצלום אוויר מצורף)
+            </div>
+            <div style="padding:8px 10px; text-align:center;">
+              ${hasMap
+                ? `<img src="${mapImgEl.src}" style="width:auto; max-width:100%; height:auto; max-height:255px; border:1px solid #94a3b8; border-radius:6px; display:block; margin:0 auto;" />
+                   <div style="font-size:11px; color:#334155; margin-top:4px; font-weight:600;">
+                     <span style="display:inline-block; width:9px; height:9px; border-radius:50%; background:#ef4444; margin-left:4px;"></span>גבול אתר הבנייה (פוליגון) &nbsp;|&nbsp; ${esc(mapCoords)}
+                   </div>`
+                : `<div style="padding:18px; color:#64748b; font-size:12px; border:1px dashed #94a3b8; border-radius:6px;">לא צורפה מפת אזור עבודה</div>`
+              }
+            </div>
+          </div>
+
+          <!-- Section 4: Workers -->
+          <div style="border:1px solid #cbd5e1; border-radius:7px; margin-bottom:10px; overflow:hidden;">
+            <div style="background:#f1f5f9; border-bottom:1px solid #cbd5e1; padding:5px 10px; font-weight:700; font-size:13px; color:#1b365d;">
+              4. פירוט הפועלים המבוקשים לאתר
+            </div>
+            <div style="padding:8px 10px;">
+              <table style="width:100%; border-collapse:collapse; font-size:11.5px;">
+                <thead>
+                  <tr style="background:#f8fafc; color:#1b365d;">
+                    <th style="border:1px solid #cbd5e1; padding:4px 6px; width:30px; text-align:center;">#</th>
+                    <th style="border:1px solid #cbd5e1; padding:4px 6px; text-align:right;">שם הפועל המלא</th>
+                    <th style="border:1px solid #cbd5e1; padding:4px 6px; text-align:right;">מספר ת.ז.</th>
+                    <th style="border:1px solid #cbd5e1; padding:4px 6px; text-align:right;">מספר טלפון</th>
+                    <th style="border:1px solid #cbd5e1; padding:4px 6px; text-align:right;">תוקף היתר עבודה / כרטיס</th>
+                  </tr>
+                </thead>
+                <tbody>${workersRowsHtml}</tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Section 5: Notes -->
+          <div style="border:1px solid #cbd5e1; border-radius:7px; margin-bottom:10px; overflow:hidden;">
+            <div style="background:#f1f5f9; border-bottom:1px solid #cbd5e1; padding:5px 10px; font-weight:700; font-size:13px; color:#1b365d;">
+              5. פירוט העבודה / הערות נוספות לרבש"צ
+            </div>
+            <div style="padding:7px 10px; font-size:12px; min-height:28px; white-space:pre-wrap;">${esc(additionalNotes)}</div>
+          </div>
+
+          <!-- Section 6: Mandatory Rules (Fence optional to reduce guard ratio) -->
+          <div style="background:#fffbeb; border:1px solid #fcd34d; border-radius:7px; padding:8px 12px; margin-bottom:10px;">
+            <div style="font-weight:800; color:#92400e; font-size:12px; margin-bottom:4px;">
+              ⚠️ עיקרי נוהל הכנסת ואבטחת פועלים פלסטינים — הנחיות מחייבות לתושב, לקבלן ולשומר:
+            </div>
+            <ul style="margin:0; padding-right:16px; font-size:10.8px; color:#1e293b; line-height:1.38;">
+              <li style="margin-bottom:2px;"><strong>איסור כניסת רכבים פלסטינים:</strong> אין כניסת רכבים פלסטינים ליישוב בשום מקרה ולא יתקבלו החרגות.</li>
+              <li style="margin-bottom:2px;"><strong>הגשה מראש ואישורים:</strong> יש להגיש טופס זה עד <strong>שבוע לפני תחילת העבודה</strong> לבניית תוכנית אבטחה ע"י הרבש"צ. חובה לפתוח משתמש באתר המנהל האזרחי ולחדש מראש את תוקף רישיון העבודה והכרטיס המגנטי (פועל ללא אישור בתוקף לא ייכנס; כניסה להצעת מחיר דורשת אישור ק. הגמ"ר 3 ימים מראש).</li>
+              <li style="margin-bottom:2px;"><strong>יחסי שמירה וגידור האתר:</strong> אתר ללא גדר, עם גדר פתוחה או גדר לקויה — יחס השמירה הוא <strong>1:3</strong> (שומר אחד על כל 3 פועלים); אתר עם גדר תקנית ושער נעול כל הזמן — יחס השמירה הוא <strong>1:5</strong> (שומר אחד על כל 5 פועלים). גדר תקנית היא גדר בגובה <strong>3 מטרים</strong>, או גדר בגובה <strong>2 מטרים בתוספת טלטלית</strong> בחלקה העליון. בכל פתיחת גדר יש לעדכן מראש את החמ"ל היישובי במספר <strong>02-9936406</strong>.</li>
+              <li style="margin-bottom:2px;"><strong>ליווי חמוש וזיהוי פועלים:</strong> ליווי הפועלים מהשער לאתר ובחזרה יתבצע אך ורק ע"י <strong>שומר חמוש, מנהל עבודה חמוש או תושב חמוש</strong>. כל פועל ילבש <strong>ווסט צהוב</strong> ויפקיד כרטיס מגנטי בשער.</li>
+              <li><strong>הנחיות לשומר הפועלים:</strong> אישור רבש"צ מראש, הצגת <strong>רישיון נשק בתוקף</strong> בתחילת יום העבודה, נשק מאובטח ברצועה לחגורה, <strong>ווסט כתום</strong>, <strong>כובע זיהוי זמין בכיס</strong>, לבוש תקני (<strong>מכנס ארוך ונעליים סגורות</strong>), ביצוע סיור אחת לחצי שעה ושמירה על קשר עין רציף עם הפועלים והיקף האתר מנקודה שולטת.</li>
+            </ul>
+          </div>
+
+          <!-- Section 7: Signatures (Resident + Rabshatz ONLY) -->
+          <div>
+            <div style="font-size:11.5px; font-weight:700; color:#1e293b; background:#f8fafc; padding:6px 10px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom:8px;">
+              ☑ אני החתום מטה מצהיר כי קראתי והבנתי את עיקרי נוהל הכנסת הפועלים היישובי, ומתחייב לעמוד בכל תנאי האבטחה והליווי במלואם.
+            </div>
+
+            <div style="display:flex; gap:14px; width:100%;">
+              <div style="flex:1; border:1.5px solid #94a3b8; border-radius:7px; padding:8px 10px; min-height:118px; display:flex; flex-direction:column; justify-content:space-between;">
+                <div style="font-weight:700; font-size:12px; color:#1b365d; border-bottom:1px solid #e2e8f0; padding-bottom:4px;">
+                  חתימת התושב / מבקש הבקשה
+                </div>
+                <div style="height:60px; display:flex; align-items:center; justify-content:center; margin:4px 0;">
+                  ${hasSignature
+                    ? `<img src="${sigImgEl.src}" style="width:auto; height:auto; max-height:56px; max-width:92%; display:block;" />`
+                    : `<span style="color:#94a3b8; font-size:11px;">ללא חתימה דיגיטלית</span>`
+                  }
+                </div>
+                <div style="font-size:11px; color:#475569; display:flex; justify-content:space-between;">
+                  <span>שם: <strong>${esc(residentName)} (${esc(residentId)})</strong></span>
+                  <span>תאריך: <strong>${todayStr}</strong></span>
+                </div>
+              </div>
+
+              <div style="flex:1; border:1.5px solid #94a3b8; border-radius:7px; padding:8px 10px; min-height:118px; display:flex; flex-direction:column; justify-content:space-between;">
+                <div style="font-weight:700; font-size:12px; color:#1b365d; border-bottom:1px solid #e2e8f0; padding-bottom:4px;">
+                  אישור וחתימת רבש"צ היישוב
+                </div>
+                <div style="height:60px; border-bottom:1px solid #94a3b8; margin:4px 0;"></div>
+                <div style="font-size:11px; color:#475569; display:flex; justify-content:space-between;">
+                  <span>שם הרבש"צ: _________________</span>
+                  <span>תאריך: ____/____/2026</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- Direct PDF Generation + WhatsApp File Share (Mobile & Desktop) ---
+    let isExporting = false;
+
+    async function exportAndShareWhatsApp(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (isExporting) return;
+
+      const residentName = document.getElementById('residentName').value.trim();
+      const siteLoc = document.getElementById('siteLocation').value.trim();
+      const sigImgEl = document.getElementById('residentSigImg');
+      const hasSignature = sigImgEl.style.display !== 'none' && sigImgEl.src;
+
+      if (!residentName || !siteLoc) {
+        alert('נא למלא לכל הפחות את שם התושב/מזמין העבודה ואת מיקום אתר הבנייה לפני ייצוא ושליחה.');
+        if (!residentName) document.getElementById('residentName').focus();
+        else document.getElementById('siteLocation').focus();
+        return;
+      }
+
+      if (!hasSignature) {
+        const proceed = confirm('טרם הוספת חתימת תושב. האם ברצונך לחתום כעת? (לחץ "אישור" לפתיחת חלון החתימה, או "ביטול" להמשך ללא חתימה)');
+        if (proceed) {
+          openSigModal();
+          return;
+        }
+      }
+
+      const safeName = residentName.replace(/[^\u0590-\u05FFa-zA-Z0-9_-]/g, '_');
+      const fileName = `בקשת_אתר_בנייה_מגדל_עוז_${safeName}.pdf`;
+
+      // Build copyable text summary of guards and workers for easy copy-paste into Zeev Lavan
+      const residentId = document.getElementById('residentId').value.trim();
+      const residentPhone = document.getElementById('residentPhone').value.trim();
+      const startDateVal = formatDateIL(document.getElementById('startDate').value);
+      const workHoursVal = document.getElementById('workHours').value.trim();
+
+      let guardsTxt = [];
+      document.querySelectorAll('#guardsTbody tr').forEach((tr, i) => {
+        const inp = tr.querySelectorAll('input');
+        const n = inp[0]?.value.trim();
+        const id = inp[1]?.value.trim();
+        const ph = inp[2]?.value.trim();
+        const lic = inp[3]?.value.trim();
+        if (n || id || ph) guardsTxt.push(`${i + 1}. ${n || '-'} | ת"ז: ${id || '-'} | טל': ${ph || '-'} | רישיון נשק: ${lic || '-'}`);
+      });
+
+      let workersTxt = [];
+      document.querySelectorAll('#workersTbody tr').forEach((tr, i) => {
+        const inp = tr.querySelectorAll('input');
+        const n = inp[0]?.value.trim();
+        const id = inp[1]?.value.trim();
+        const ph = inp[2]?.value.trim();
+        const exp = inp[3]?.value.trim();
+        if (n || id || ph) workersTxt.push(`${i + 1}. ${n || '-'} | ת"ז: ${id || '-'} | טל': ${ph || '-'} | תוקף: ${exp || '-'}`);
+      });
+
+      const waMessage = [
+        `*בקשת אתר בנייה — קיבוץ מגדל עוז*`,
+        `• *מזמין:* ${residentName}${residentId ? ` (ת"ז ${residentId})` : ''}${residentPhone ? ` | ${residentPhone}` : ''}`,
+        `• *מיקום האתר:* ${siteLoc}`,
+        `• *תחילת עבודה:* ${startDateVal}${workHoursVal ? ` | *שעות:* ${workHoursVal}` : ''}`,
+        guardsTxt.length ? `\n*שומרים חמושים:*\n${guardsTxt.join('\n')}` : '',
+        workersTxt.length ? `\n*פועלים מבוקשים:*\n${workersTxt.join('\n')}` : '',
+        `\nמצורף קובץ ה-PDF החתום עם מפת האתר.`
+      ].filter(Boolean).join('\n');
+
+      if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+        alert('שגיאה בטעינת רכיב ה-PDF. ודא חיבור לאינטרנט ונסה שוב.');
+        return;
+      }
+
+      isExporting = true;
+      const btn = document.getElementById('exportWaBtn');
+      const origBtnText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '⏳ מכין קובץ PDF לשליחה...';
+
+      // Create an isolated static flow container at top of document (NO position:fixed -> zero blank pages!)
+      const host = document.createElement('div');
+      host.style.cssText = 'position:absolute; left:0; top:0; width:760px; background:#ffffff; z-index:99999; box-shadow:0 0 0 9999px rgba(15,23,42,0.55);';
+      host.innerHTML = buildCleanA4SheetHTML();
+
+      const prevScrollX = window.scrollX;
+      const prevScrollY = window.scrollY;
+      window.scrollTo(0, 0);
+      document.body.appendChild(host);
+
+      try {
+        // Wait for images & layout paint
+        await new Promise(r => setTimeout(r, 200));
+
+        let canvas;
+        try {
+          canvas = await html2canvas(host, {
+            scale: 3,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            width: 760,
+            windowWidth: 800,
+            scrollX: 0,
+            scrollY: 0,
+            imageTimeout: 0
+          });
+        } catch (scaleErr) {
+          canvas = await html2canvas(host, {
+            scale: 2.2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            width: 760,
+            windowWidth: 800,
+            scrollX: 0,
+            scrollY: 0
+          });
+        }
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+          compress: true
+        });
+
+        const pageW = pdf.internal.pageSize.getWidth();   // 210mm
+        const pageH = pdf.internal.pageSize.getHeight();  // 297mm
+        const margin = 5;
+        const usableW = pageW - margin * 2;
+        const usableH = pageH - margin * 2;
+
+        // Lossless PNG prevents JPEG compression artifacts around crisp Hebrew text & thin borders
+        const imgData = canvas.toDataURL('image/png');
+        let renderW = usableW;
+        let renderH = (canvas.height * renderW) / canvas.width;
+
+        // Scale neatly onto a single A4 page if slightly taller
+        if (renderH > usableH) {
+          const ratio = usableH / renderH;
+          renderH = usableH;
+          renderW = renderW * ratio;
+        }
+
+        const offsetX = margin + (usableW - renderW) / 2;
+        pdf.addImage(imgData, 'PNG', offsetX, margin, renderW, renderH, undefined, 'FAST');
+
+        const pdfBlob = pdf.output('blob');
+        const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+        // Clean up overlay before sharing/downloading
+        document.body.removeChild(host);
+        window.scrollTo(prevScrollX, prevScrollY);
+
+        // 1. Mobile Native Share Sheet (Sends actual PDF file directly to WhatsApp!)
+        if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+          try {
+            await navigator.share({
+              files: [pdfFile],
+              title: fileName,
+              text: waMessage
+            });
+            showToast('✓ הקובץ שותף בהצלחה!');
+            return;
+          } catch (shareErr) {
+            if (shareErr && shareErr.name === 'AbortError') {
+              return;
+            }
+            console.warn('Web Share fallback to download + WhatsApp:', shareErr);
+          }
+        }
+
+        // 2. Desktop / Fallback: Download the single PDF file + open WhatsApp chat to Rabshatz
+        pdf.save(fileName);
+        showToast('✓ קובץ ה-PDF ירד למכשיר — פותח ווצאפ לצירוף הקובץ...', 4500);
+        setTimeout(() => {
+          const waUrl = `https://wa.me/${RABSHATZ_WA_PHONE}?text=${encodeURIComponent(waMessage)}`;
+          window.open(waUrl, '_blank', 'noopener');
+        }, 700);
+
+      } catch (err) {
+        if (host.parentNode) document.body.removeChild(host);
+        window.scrollTo(prevScrollX, prevScrollY);
+        console.error('PDF generation failed:', err);
+        alert('אירעה שגיאה ביצירת קובץ ה-PDF. אנא נסה שוב.');
+      } finally {
+        isExporting = false;
+        btn.disabled = false;
+        btn.innerHTML = origBtnText;
+      }
+    }
+
+    function exportVectorPDF(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      const residentName = document.getElementById('residentName').value.trim();
+      const siteLoc = document.getElementById('siteLocation').value.trim();
+      if (!residentName || !siteLoc) {
+        alert('נא למלא לכל הפחות את שם התושב/מזמין העבודה ואת מיקום אתר הבנייה לפני שמירת ה-PDF.');
+        return;
+      }
+      const origTitle = document.title;
+      const safeName = residentName.replace(/[^\u0590-\u05FFa-zA-Z0-9_-]/g, '_');
+      document.title = `בקשת_אתר_בנייה_מגדל_עוז_${safeName}`;
+      window.print();
+      setTimeout(() => { document.title = origTitle; }, 1500);
+    }
+
+    function resetForm() {
+      if (!confirm('האם לאפס את כל השדות בטופס?')) return;
+      document.querySelectorAll('input:not([readonly]), textarea').forEach(el => {
+        if (el.type === 'checkbox') el.checked = false;
+        else if (el.type === 'number') el.value = el.id === 'workersCount' ? '3' : '1';
+        else if (el.type !== 'file') el.value = '';
+      });
+      clearSigCanvas();
+      document.getElementById('residentSigImg').style.display = 'none';
+      document.getElementById('sigPlaceholderText').style.display = 'block';
+      document.getElementById('attachedMapImg').style.display = 'none';
+      document.getElementById('mapEmptyPrompt').style.display = 'block';
+      document.getElementById('mapCaptionBar').style.display = 'none';
+      document.getElementById('mapPreviewBox').classList.remove('has-image');
+      syncSignatureMeta();
+      updateSecurityRatio();
+      showToast('הטופס אופס');
+    }
+  </script>
+</body>
+</html>
